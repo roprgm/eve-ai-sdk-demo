@@ -1,0 +1,141 @@
+:root {
+  color: oklch(0.91 0 0);
+  background: oklch(0.185 0 0);
+  font-family: Geist, Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.chat {
+  display: grid;
+  height: 100dvh;
+  grid-template-rows: 1fr auto;
+}
+
+.messages {
+  display: flex;
+  width: 100vw;
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px max(24px, calc((100% - 720px) / 2)) 48px;
+  overflow-y: auto;
+  scrollbar-color: oklch(0.58 0 0) transparent;
+  scrollbar-width: thin;
+}
+
+.message {
+  max-width: 75%;
+  margin: 0;
+  overflow-anchor: none;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.message:empty {
+  display: none;
+}
+
+.message span {
+  animation: fade-in 120ms ease-out both;
+}
+
+.message[data-role="user"] {
+  align-self: flex-end;
+  padding: 8px 16px;
+  border-radius: 16px;
+  background: oklch(0.235 0 0);
+}
+
+.scroll-anchor {
+  height: 1px;
+  flex: none;
+  overflow-anchor: auto;
+}
+
+.loading {
+  animation: shimmer 800ms ease-in-out infinite alternate;
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  width: min(736px, calc(100% - 32px));
+  gap: 10px;
+  margin: 0 auto 20px;
+  padding: 8px;
+  border: 1px solid color-mix(in oklch, currentColor 5%, transparent);
+  border-radius: 24px;
+  background: oklch(0.235 0 0);
+}
+
+.composer textarea {
+  min-width: 0;
+  min-height: 32px;
+  max-height: 160px;
+  flex: 1;
+  padding: 6px 8px;
+  border: 0;
+  resize: none;
+  overflow-y: auto;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  line-height: 20px;
+  field-sizing: content;
+}
+
+.composer textarea::placeholder {
+  color: oklch(0.64 0 0);
+}
+
+.composer button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: oklch(0.91 0 0);
+  color: oklch(0.185 0 0);
+  cursor: pointer;
+  font-size: 18px;
+  place-items: center;
+}
+
+.composer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading,
+  .message span {
+    animation: none;
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "web": {
+      "root": ".",
+      "framework": "vite",
+      "devCommand": "bun run web",
+      "buildCommand": "bun run build",
+      "outputDirectory": "app/dist",
+      "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+    },
+    "eve": {
+      "root": ".",
+      "framework": "eve",
+      "buildCommand": "bun run build:agent"
+    }
+  },
+  "rewrites": [
+    { "source": "/eve/(.*)", "destination": { "service": "eve" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
+  ]
+}
