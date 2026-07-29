@@ -1,11 +1,13 @@
 import type { RouteHandlerArgs } from "eve/channels";
+import { none } from "eve/channels/auth";
 import type { HandleMessageStreamEvent } from "eve/client";
 import { describe, expect, it, vi } from "vitest";
 
-import channel from "../agent/channels/ai-sdk.ts";
+import { aiSdkChannel } from "../lib/ai-sdk-channel";
 
 type EveEvent = HandleMessageStreamEvent;
 
+const channel = aiSdkChannel({ auth: [none()] });
 const turn = { sequence: 1, turnId: "turn-1" } as const;
 const step = { ...turn, stepIndex: 0 } as const;
 
@@ -148,6 +150,55 @@ describe("AI SDK channel", () => {
     expect(result.getEventStream).toHaveBeenNthCalledWith(2);
   });
 
+  it("applies onMessage auth and context before dispatch", async () => {
+    const onMessage = vi.fn(() => ({
+      auth: null,
+      context: ["Trusted application context."],
+    }));
+    const configuredChannel = aiSdkChannel({
+      auth: [none()],
+      onMessage,
+    });
+
+    const result = await runChannel([{ type: "turn.started", data: turn }], {
+      channel: configuredChannel,
+      message: "New",
+    });
+
+    expect(onMessage).toHaveBeenCalledWith(
+      {
+        aiSdk: {
+          caller: expect.any(Object),
+          chatId: "chat-1",
+          request: expect.any(Request),
+        },
+      },
+      "New",
+    );
+    expect(result.send).toHaveBeenCalledWith(
+      {
+        message: "New",
+        context: ["Trusted application context."],
+      },
+      {
+        auth: null,
+        continuationToken: "chat-1",
+      },
+    );
+  });
+
+  it("lets onMessage skip dispatch", async () => {
+    const configuredChannel = aiSdkChannel({
+      auth: [none()],
+      onMessage: () => null,
+    });
+
+    const result = await runChannel([], { channel: configuredChannel });
+
+    expect(result.status).toBe(204);
+    expect(result.send).not.toHaveBeenCalled();
+  });
+
   it("resumes the current turn through the standard AI SDK endpoint", async () => {
     const getEventStream = vi.fn(async () =>
       readableEvents([{ type: "turn.started", data: turn }], false, vi.fn()),
@@ -287,6 +338,7 @@ describe("AI SDK channel", () => {
 async function runChannel(
   events: readonly EveEvent[],
   options: {
+    readonly channel?: typeof channel;
     readonly keepOpen?: boolean;
     readonly message?: string;
   } = {},
@@ -301,7 +353,7 @@ async function runChannel(
     cancel: vi.fn(),
     getEventStream,
   }));
-  const route = channel.routes[0];
+  const route = (options.channel ?? channel).routes[0];
   if (!route || !("method" in route)) {
     throw new Error("Missing HTTP route.");
   }

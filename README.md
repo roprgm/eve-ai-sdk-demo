@@ -70,14 +70,31 @@ Install the dependencies with Bun or your preferred package manager:
 bun add eve ai @ai-sdk/react
 ```
 
-Then copy [`agent/channels/ai-sdk.ts`](agent/channels/ai-sdk.ts) into the same path in your project.
+Then copy [`lib/ai-sdk-channel.ts`](lib/ai-sdk-channel.ts) into your project and define the
+application channel:
 
-Eve discovers `agent/channels/ai-sdk.ts` automatically. The copied file is application code you own
-and can customize; it validates AI SDK messages, starts or continues the Eve session, translates
-Eve events into AI SDK UI Message Stream chunks, restores history, and reconnects active streams.
+```ts
+import { none } from "eve/channels/auth";
 
-The demo channel uses `none()` authentication so it works without setup. Replace it with your
-application's authentication before deploying it to production.
+import { aiSdkChannel } from "../../lib/ai-sdk-channel";
+
+export default aiSdkChannel({
+  auth: [none()],
+  onMessage(ctx, message) {
+    console.log(ctx, message);
+    return { auth: null };
+  },
+});
+```
+
+Save that file as `agent/channels/ai-sdk.ts` so Eve discovers it automatically. The reusable
+`aiSdkChannel()` implementation validates AI SDK messages, starts or continues the Eve
+session, translates Eve events into AI SDK UI Message Stream chunks, restores history, and
+reconnects active streams.
+
+Like Eve's built-in channels, the constructor also accepts `cors`, `events`, and an `onMessage`
+hook that can set session auth, add context, or skip dispatch. The demo passes `none()` so it works
+without setup. Replace it with your application's authentication before deploying it to production.
 
 The channel exposes three routes:
 
@@ -122,9 +139,9 @@ contract.
 - Tool calls and results represented as standard AI SDK chunks.
 - A frontend that only depends on the familiar AI SDK React API.
 
-The complete adapter is a single file:
-[`agent/channels/ai-sdk.ts`](agent/channels/ai-sdk.ts). It handles message validation, durable
-continuations, history, stream resumption, and translation from Eve events to AI SDK UI messages.
+The reusable adapter lives in [`lib/ai-sdk-channel.ts`](lib/ai-sdk-channel.ts). The application-owned
+[`agent/channels/ai-sdk.ts`](agent/channels/ai-sdk.ts) only configures authentication and exports the
+channel Eve discovers.
 
 ## Run the demo
 
